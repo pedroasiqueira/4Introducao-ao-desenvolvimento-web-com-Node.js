@@ -1,60 +1,80 @@
 const express = require('express');
+const validateTeam = require('./middlewares/validateTeam');
+const existingId = require('./middlewares/existingId');
+const teams = require('./utils/teams');
 
 const app = express();
+
+let nextId = 3;
+
 app.use(express.json());
-
-const teams = [
-  {
-    id: 1,
-    name: 'São Paulo Futebol Clube',
-    initials: 'SPF',
-  },
-  {
-    id: 2,
-    name: 'Clube Atlético Mineiro',
-    initials: 'CAM',
-  },
-];
-
-// Listando os times:
-app.get('/teams', (req, res) => res.status(200).json({ teams }));
-// Listando time pelo id:
-app.get('/teams/:id', (req, res) => {
-  const { id } = req.params;
-  const team = teams.find((teamm) => teamm.id === Number(id));
-  if (!team) {
-    return res.status(404).json({ message: 'Team not found' });
+// Listando times
+app.get('/teams', (req, res) => res.json(teams));
+// Listando times pelo id
+app.get('/teams/:id', existingId, (req, res) => {
+  const id = Number(req.params.id);
+  const team = teams.find(t => t.id === id);
+  if (team) {
+    res.json(team);
+  } else {
+    res.sendStatus(404);
   }
-
-  res.status(200).json({ team });
 });
 
-// Cadastrando times:
-app.post('/teams', (req, res) => {
-  const newTeam = { ...req.body };
-  teams.push(newTeam);
-  res.status(201).json({ team: newTeam });
+// Arranja os middlewares para chamar validateTeam primeiro
+app.post('/teams', validateTeam, (req, res) => {
+  const team = { id: nextId, ...req.body };
+  teams.push(team);
+  nextId += 1;
+  res.status(201).json(team);
 });
 
-// Editando times:
-app.put('/teams/:id', (req, res) => {
-  const { id } = req.params;
-  const { name, initials } = req.body;
-  const updateTeam = teams.find((team) => team.id === Number(id));
-  if (!updateTeam) {
-    return res.status(404).json({ message: 'Team not found' });
-  }
-  updateTeam.name = name;
-  updateTeam.initials = initials;
-  res.status(200).json({ updateTeam });
+app.put('/teams/:id', existingId, validateTeam, (req, res) => {
+  const id = Number(req.params.id);
+  const team = teams.find(t => t.id === id);
+  const index = teams.indexOf(team);
+  const updated = { id, ...req.body };
+  teams.splice(index, 1, updated);
+  res.status(201).json(updated);
+});
+// Como estava antes dos middleware tá na parte final
+
+// Deletando times
+app.delete('/teams/:id', existingId, (req, res) => {
+  const id = Number(req.params.id);
+  const team = teams.find(t => t.id === id);
+  const index = teams.indexOf(team);
+  teams.splice(index, 1);
+  res.sendStatus(204);
 });
 
-// Deletando times:
-app.delete('/teams/:id', (req, res) => {
-  const { id } = req.params;
-  const arrayPosition = teams.findIndex((team) => team.id === Number(id));
-  teams.splice(arrayPosition, 1);
-  res.status(200).end();
-});
+
+// Antes do middleware:
+// // Cadastrando times
+// app.post('/teams', (req, res) => {
+//   const requiredProperties = ['nome', 'sigla'];
+//   if (requiredProperties.every((property) => property in req.body)) {
+//     const team = { id: nextId, ...req.body };
+//     teams.push(team);
+//     nextId += 1;
+//     res.status(201).json(team);
+//   } else {
+//     res.sendStatus(400);
+//   }
+// });
+// // Editando times
+// app.put('/teams/:id', (req, res) => {
+//   const id = Number(req.params.id);
+//   const requiredProperties = ['nome', 'sigla'];
+//   const team = teams.find(t => t.id === id);
+//   if (team && requiredProperties.every((property) => property in req.body)) {
+//     const index = teams.indexOf(team);
+//     const updated = { id, ...req.body };
+//     teams.splice(index, 1, updated);
+//     res.status(201).json(updated);
+//   } else {
+//     res.sendStatus(400);
+//   }
+// });
 
 module.exports = app;
