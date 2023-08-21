@@ -2,12 +2,16 @@ const express = require('express');
 const validateTeam = require('./middlewares/validateTeam');
 const existingId = require('./middlewares/existingId');
 const teams = require('./utils/teams');
+require('express-async-errors'); // não precisa definir uma variável
+const apiCredentials = require('./middlewares/apiCredentials');
+
 
 const app = express();
 
 let nextId = 3;
 
 app.use(express.json());
+app.use(apiCredentials);
 // Listando times
 app.get('/teams', (req, res) => res.json(teams));
 // Listando times pelo id
@@ -19,10 +23,18 @@ app.get('/teams/:id', existingId, (req, res) => {
   } else {
     res.sendStatus(404);
   }
-});
+}); 
 
 // Arranja os middlewares para chamar validateTeam primeiro
 app.post('/teams', validateTeam, (req, res) => {
+  if (
+    // confere se a sigla proposta está inclusa nos times autorizados
+    !req.teams.teams.includes(req.body.sigla)
+    // confere se já não existe um time com essa sigla
+    && teams.every((t) => t.sigla !== req.body.sigla)
+  ) {
+    return res.status(422).json({ message: 'Já existe um time com essa sigla'});
+  }
   const team = { id: nextId, ...req.body };
   teams.push(team);
   nextId += 1;
