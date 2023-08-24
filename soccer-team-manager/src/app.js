@@ -37,10 +37,10 @@ app.post('/teams', (req, res) => {
 });
 
 // Editando times:
-app.put('/teams/:id', (req, res) => {
-  const { id } = req.params;
+app.put('/teams/:ids', (req, res) => {
+  const { ids } = req.params;
   const { name, initials } = req.body;
-  const updateTeam = teams.find((team) => team.id === Number(id));
+  const updateTeam = teams.find((team) => team.id === Number(ids));
   if (!updateTeam) {
     return res.status(404).json({ message: 'Team not found' });
   }
@@ -50,9 +50,9 @@ app.put('/teams/:id', (req, res) => {
 });
 
 // Deletando times:
-app.delete('/teams/:id', (req, res) => {
-  const { id } = req.params;
-  const arrayPosition = teams.findIndex((team) => team.id === Number(id));
+app.delete('/teams/:ids', (req, res) => {
+  const { ids } = req.params;
+  const arrayPosition = teams.findIndex((team) => team.id === Number(ids));
   teams.splice(arrayPosition, 1);
   res.status(200).end();
 });
