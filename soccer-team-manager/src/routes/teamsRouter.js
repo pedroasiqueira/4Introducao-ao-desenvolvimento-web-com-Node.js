@@ -26,11 +26,15 @@ router.get('/:id', existingId, (req, res) => {
 
 // Arranja os middlewares para chamar validateTeam primeiro
 router.post('/', validateTeam, (req, res) => {
+  console.log(req.teams.teams);
+  console.log(req.body.sigla);
+  console.log(!req.teams.teams.includes(req.body.sigla));
+  console.log(teams.every((t) => t.sigla !== req.body.sigla));
   if (
     // confere se a sigla proposta está inclusa nos times autorizados
-    !req.teams.teams.includes(req.body.sigla)
+    req.teams.teams.includes(req.body.sigla)
     // confere se já não existe um time com essa sigla
-    && teams.every((t) => t.sigla !== req.body.sigla)
+    && !teams.every((t) => t.sigla !== req.body.sigla)
   ) {
     return res.status(422).json({ message: 'Já existe um time com essa sigla'});
   }
