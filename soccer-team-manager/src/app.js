@@ -6,7 +6,7 @@ const app = express();
 
 app.use(express.json());
 
-app.use('/teams', teamsRouter);
 
+app.use('/teams', teamsRouter);
 
 module.exports = app;
